@@ -15,7 +15,7 @@ export async function GET() {
     const [ano, rest] = m.periodo.split('-')
     const anoN = Number(ano)
 
-    const filtradas = vendas.filter(v => {
+    const filtradas = vendas.filter((v: typeof vendas[0]) => {
       if (v.data.getFullYear() !== anoN) return false
       if (!rest) return true // anual
       if (rest.startsWith('T')) {
@@ -27,11 +27,11 @@ export async function GET() {
       return String(v.data.getMonth() + 1).padStart(2, '0') === rest
     })
 
-    if (m.tipo === 'faturamento') valorAtual = filtradas.reduce((s, v) => s + Number(v.precoVenda), 0)
-    else if (m.tipo === 'lucro') valorAtual = filtradas.reduce((s, v) => s + Number(v.lucroLiquido), 0)
+    if (m.tipo === 'faturamento') valorAtual = filtradas.reduce((s: number, v: typeof vendas[0]) => s + Number(v.precoVenda), 0)
+    else if (m.tipo === 'lucro') valorAtual = filtradas.reduce((s: number, v: typeof vendas[0]) => s + Number(v.lucroLiquido), 0)
     else if (m.tipo === 'pedidos') valorAtual = filtradas.length
     else if (m.tipo === 'clientes') {
-      const unique = new Set(filtradas.map(v => v.cliente))
+      const unique = new Set(filtradas.map((v: typeof vendas[0]) => v.cliente))
       valorAtual = unique.size
     }
 
