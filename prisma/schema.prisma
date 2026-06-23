@@ -50,6 +50,15 @@ model CadastroCliente {
   updatedAt   DateTime  @updatedAt
 }
 
+model Meta {
+  id         String   @id @default(uuid())
+  tipo       String
+  periodo    String
+  valorMeta  Decimal  @db.Decimal(12, 2)
+  descricao  String   @default("")
+  createdAt  DateTime @default(now())
+}
+
 model CadastroProduto {
   id            String   @id @default(uuid())
   nome          String   @unique
