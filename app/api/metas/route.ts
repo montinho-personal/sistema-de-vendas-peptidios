@@ -10,7 +10,7 @@ export async function GET() {
   const metas = await prisma.meta.findMany({ orderBy: { createdAt: 'desc' } })
   const vendas = await prisma.venda.findMany()
 
-  const result = metas.map(m => {
+  const result = metas.map((m: typeof metas[0]) => {
     let valorAtual = 0
     const [ano, rest] = m.periodo.split('-')
     const anoN = Number(ano)

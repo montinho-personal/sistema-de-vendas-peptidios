@@ -64,7 +64,7 @@ export async function GET() {
   })
   const maxValorCadeia = Math.max(...Object.values(valoresCadeia), 1)
 
-  const scores = clientes.map((c) => {
+  const scores = clientes.map((c: Cliente) => {
     const vs = porCliente[c.nome] || []
     const totalGasto = totaisFaturamento[c.nome] || 0
     const pedidosCount = totalPedidos[c.nome] || 0
@@ -126,6 +126,6 @@ export async function GET() {
     }
   })
 
-  scores.sort((a, b) => b.score - a.score)
+  scores.sort((a: { score: number }, b: { score: number }) => b.score - a.score)
   return NextResponse.json(scores)
 }
