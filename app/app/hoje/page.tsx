@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { Topbar } from '@/components/Topbar'
 
-interface Alerta { tipo: string; urgencia: string; cliente: string; produto: string; diasAtraso: number; ultimaCompra: string; cicloMedio: number; totalGasto: number }
+interface Alerta { tipo: string; urgencia: string; cliente: string; produto: string; diasAtraso: number; ultimaCompra: string; cicloMedio: number; totalGasto: number; telefone: string }
 interface Oportunidade { cliente: string; produto: string; diasRestantes: number; proximaCompra: string; probabilidade: number; valorEstimado: number }
 interface Tendencia { produto: string; vendasUltimos30: number; vendasAntes30: number; variacao: number; receitaUltimos30: number }
 
@@ -81,10 +81,12 @@ export default function HojePage() {
                   <p className="text-xs text-gray-400">em atraso</p>
                 </div>
               </div>
-              <a href={`https://wa.me/55${a.cliente.replace(/\D/g,'')}`} target="_blank" rel="noopener noreferrer"
-                className="mt-3 inline-block text-xs bg-green-500/20 text-green-400 border border-green-500/30 px-3 py-1 rounded-lg hover:bg-green-500/30 transition-colors">
-                💬 WhatsApp
-              </a>
+              {a.telefone && (
+                <a href={`https://wa.me/55${a.telefone.replace(/\D/g,'')}`} target="_blank" rel="noopener noreferrer"
+                  className="mt-3 inline-block text-xs bg-green-500/20 text-green-400 border border-green-500/30 px-3 py-1 rounded-lg hover:bg-green-500/30 transition-colors">
+                  💬 WhatsApp
+                </a>
+              )}
             </div>
           ))}
         </div>

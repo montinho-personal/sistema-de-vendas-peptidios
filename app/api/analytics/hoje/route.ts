@@ -10,9 +10,6 @@ export async function GET() {
   const vendas = await prisma.venda.findMany({ orderBy: { data: 'desc' } })
   const today = new Date()
 
-  // Per-client, per-product last purchase + cycle
-  const map: Record<string, Record<string, { ultimaCompra: Date; proximaCompra: Date; cicloMedio: number; valorEstimado: number; telefone: string }>> = {}
-
   // Get client phones
   const clientes = await prisma.cadastroCliente.findMany()
   const phoneMap: Record<string, string> = {}
@@ -52,6 +49,7 @@ export async function GET() {
       const urgencia = diasAtraso > cicloMedio * 0.5 ? 'critica' : diasAtraso > cicloMedio * 0.2 ? 'alta' : 'media'
       alertas.push({
         tipo: 'recompra', urgencia, cliente, produto, diasAtraso,
+        telefone: phoneMap[cliente] || '',
         ultimaCompra: ultima.data.toISOString().split('T')[0],
         cicloMedio, totalGasto: sorted.reduce((s, c) => s + c.precoVenda, 0),
       })

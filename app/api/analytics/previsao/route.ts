@@ -20,7 +20,6 @@ export async function GET() {
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const vendas = await prisma.venda.findMany({ orderBy: { data: 'asc' } })
-  const vendasPerdidas = await prisma.vendaPerdida.findMany()
 
   const now = new Date()
 
@@ -111,30 +110,37 @@ export async function GET() {
     })
   })
 
-  const previsaoProdutos = Object.entries(porProduto).map(([nome, vals]) => {
+  // Por produto — estrutura esperada pela página
+  const porProdutoResult = Object.entries(porProduto).map(([nome, vals]) => {
     const reg2 = regressaoLinear(vals)
-    const m = vals.slice(-3)
-    const m3 = m.length > 0 ? m.reduce((a, b) => a + b, 0) / m.length : 0
+    const ult3 = vals.slice(-3)
+    const mediaUltimos3 = ult3.length > 0 ? ult3.reduce((a, b) => a + b, 0) / ult3.length : 0
+    const prev3 = vals.slice(-6, -3)
+    const mediaPrev3 = prev3.length > 0 ? prev3.reduce((a, b) => a + b, 0) / prev3.length : mediaUltimos3
+    const crescimentoProd = mediaPrev3 > 0 ? ((mediaUltimos3 - mediaPrev3) / mediaPrev3) * 100 : 0
     const mom2 = vals.slice(-6).reduce((s, v, i) => s + v * Math.pow(1.5, i), 0) /
-      vals.slice(-6).reduce((s, _, i) => s + Math.pow(1.5, i), 0) || m3
+      (vals.slice(-6).reduce((s, _, i) => s + Math.pow(1.5, i), 0) || 1) || mediaUltimos3
     const next = mom2 * 0.6 + (reg2.intercept + reg2.slope * vals.length) * 0.4
     return {
       nome,
-      prev1mes: Math.max(0, Math.round(next)),
-      prev3meses: Math.max(0, Math.round(next * 3)),
-      prev6meses: Math.max(0, Math.round(next * 6)),
+      mediaUltimos3: Math.round(mediaUltimos3),
+      crescimento: Math.round(crescimentoProd),
+      proximo3Meses: Math.max(0, Math.round(next * 3)),
     }
-  }).sort((a, b) => b.prev1mes - a.prev1mes).slice(0, 10)
+  }).sort((a, b) => b.proximo3Meses - a.proximo3Meses).slice(0, 10)
 
-  // Impacto vendas perdidas
-  const totalPerdido = vendasPerdidas.reduce((s, v) => s + Number(v.valor), 0)
+  // Totais dos próximos 3 meses (soma das 3 primeiras projeções)
+  const prox3 = projecao.slice(0, 3)
+  const totalProximo3Meses = {
+    conservador: prox3.reduce((s, p) => s + p.conservador, 0),
+    realista: prox3.reduce((s, p) => s + p.realista, 0),
+    otimista: prox3.reduce((s, p) => s + p.otimista, 0),
+  }
 
   return NextResponse.json({
     historico,
     projecao,
-    previsoes: { prev30, prev90, prev180, prev365 },
-    previsaoProdutos,
-    impactoPerdidas: { total: totalPerdido, registros: vendasPerdidas.length },
-    crescimento: Math.round(crescimento * 100),
+    porProduto: porProdutoResult,
+    totalProximo3Meses,
   })
 }
