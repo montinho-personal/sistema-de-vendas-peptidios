@@ -217,51 +217,45 @@ async function main() {
   await prisma.cadastroProduto.deleteMany()
 
   console.log('Inserindo vendas...')
-  for (const s of sales) {
-    await prisma.venda.create({
-      data: {
-        data: new Date(s.data + 'T12:00:00Z'),
-        mes: s.mes,
-        ano: s.ano,
-        cliente: s.cliente,
-        produto: s.produto,
-        quantidade: s.quantidade,
-        precoCusto: s.precoCusto,
-        precoVenda: s.precoVenda,
-        lucroBruto: s.lucroBruto,
-        diasDuracao: s.diasDuracao,
-        proximaCompra: new Date(s.proximaCompra + 'T12:00:00Z'),
-        formaPagamento: s.formaPagamento,
-        taxa: s.taxa,
-        lucroLiquido: s.lucroLiquido,
-      },
-    })
-  }
+  await prisma.venda.createMany({
+    data: sales.map(s => ({
+      data: new Date(s.data + 'T12:00:00Z'),
+      mes: s.mes,
+      ano: s.ano,
+      cliente: s.cliente,
+      produto: s.produto,
+      quantidade: s.quantidade,
+      precoCusto: s.precoCusto,
+      precoVenda: s.precoVenda,
+      lucroBruto: s.lucroBruto,
+      diasDuracao: s.diasDuracao,
+      proximaCompra: new Date(s.proximaCompra + 'T12:00:00Z'),
+      formaPagamento: s.formaPagamento,
+      taxa: s.taxa,
+      lucroLiquido: s.lucroLiquido,
+    })),
+  })
 
   console.log('Inserindo vendas perdidas...')
-  for (const vp of vendasPerdidas) {
-    await prisma.vendaPerdida.create({
-      data: {
-        data: new Date(vp.data + 'T12:00:00Z'),
-        cliente: vp.cliente,
-        produto: vp.produto,
-        valor: vp.valor,
-        quantidade: vp.quantidade,
-        motivo: vp.motivo,
-      },
-    })
-  }
+  await prisma.vendaPerdida.createMany({
+    data: vendasPerdidas.map(vp => ({
+      data: new Date(vp.data + 'T12:00:00Z'),
+      cliente: vp.cliente,
+      produto: vp.produto,
+      valor: vp.valor,
+      quantidade: vp.quantidade,
+      motivo: vp.motivo,
+    })),
+  })
 
   console.log('Inserindo clientes...')
-  for (const c of cadastroClientes) {
-    await prisma.cadastroCliente.create({
-      data: {
-        nome: c.nome,
-        telefone: c.telefone,
-        indicadoPor: c.indicadoPor,
-      },
-    })
-  }
+  await prisma.cadastroCliente.createMany({
+    data: cadastroClientes.map(c => ({
+      nome: c.nome,
+      telefone: c.telefone,
+      indicadoPor: c.indicadoPor,
+    })),
+  })
 
   console.log('Inserindo produtos...')
   const produtos = [
@@ -270,9 +264,7 @@ async function main() {
     'Slup332 5mg', 'Klow 80mg', 'SS31 FDA 10mg', 'CJC + IPA 10mg', 'Ipamorelin 10mg',
     'Kisspeptin 10mg', 'Sermorelin 10mg',
   ]
-  for (const nome of produtos) {
-    await prisma.cadastroProduto.create({ data: { nome } })
-  }
+  await prisma.cadastroProduto.createMany({ data: produtos.map(nome => ({ nome })) })
 
   console.log(`✅ Seed concluído: ${sales.length} vendas, ${vendasPerdidas.length} vendas perdidas, ${cadastroClientes.length} clientes, ${produtos.length} produtos.`)
 }
