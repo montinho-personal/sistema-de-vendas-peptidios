@@ -22,8 +22,8 @@ export async function POST(req: NextRequest) {
   const mesAtual = new Date(now.getFullYear(), now.getMonth(), 1)
   const mesAnterior = new Date(now.getFullYear(), now.getMonth() - 1, 1)
 
-  const vendasMes = vendas.filter((v) => new Date(v.data) >= mesAtual)
-  const vendasMesAnt = vendas.filter((v) => {
+  const vendasMes = vendas.filter((v: typeof vendas[0]) => new Date(v.data) >= mesAtual)
+  const vendasMesAnt = vendas.filter((v: typeof vendas[0]) => {
     const d = new Date(v.data); return d >= mesAnterior && d < mesAtual
   })
 
