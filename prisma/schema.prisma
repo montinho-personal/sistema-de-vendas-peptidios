@@ -1,0 +1,64 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Venda {
+  id             String   @id @default(uuid())
+  data           DateTime @db.Date
+  mes            String
+  ano            Int
+  cliente        String
+  produto        String
+  quantidade     Int
+  precoCusto     Decimal  @db.Decimal(12, 2)
+  precoVenda     Decimal  @db.Decimal(12, 2)
+  lucroBruto     Decimal  @db.Decimal(12, 2)
+  diasDuracao    Int
+  proximaCompra  DateTime @db.Date
+  formaPagamento String
+  taxa           Decimal  @db.Decimal(12, 2)
+  lucroLiquido   Decimal  @db.Decimal(12, 2)
+  createdAt      DateTime @default(now())
+}
+
+model VendaPerdida {
+  id         String   @id @default(uuid())
+  data       DateTime @db.Date
+  cliente    String
+  produto    String
+  valor      Decimal  @db.Decimal(12, 2)
+  quantidade Int
+  motivo     String
+  createdAt  DateTime @default(now())
+}
+
+model CadastroCliente {
+  id          String    @id @default(uuid())
+  nome        String    @unique
+  telefone    String    @default("")
+  email       String    @default("")
+  cidade      String    @default("")
+  aniversario DateTime? @db.Date
+  indicadoPor String    @default("")
+  observacoes String    @default("")
+  status      String    @default("ativo")
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model CadastroProduto {
+  id            String   @id @default(uuid())
+  nome          String   @unique
+  categoria     String   @default("")
+  custoPadrao   Decimal  @default(0) @db.Decimal(12, 2)
+  vendaPadrao   Decimal  @default(0) @db.Decimal(12, 2)
+  duracaoPadrao Int      @default(90)
+  descricao     String   @default("")
+  status        String   @default("ativo")
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
