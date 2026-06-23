@@ -58,7 +58,7 @@ export async function POST(req: NextRequest) {
   const prodCritico = vendasPerdidas.length > 0
     ? Object.entries(vendasPerdidas.reduce((acc: Record<string, number>, v: typeof vendasPerdidas[0]) => {
         acc[v.produto] = (acc[v.produto] || 0) + Number(v.valor); return acc
-      }, {})).sort((a, b) => b[1] - a[1])[0]?.[0]
+      }, {} as Record<string, number>)).sort((a, b) => b[1] - a[1])[0]?.[0]
     : 'N/A'
 
   const systemContext = `Você é um consultor de negócios especializado em vendas de peptídios. Responda em português brasileiro, seja direto e prático.
