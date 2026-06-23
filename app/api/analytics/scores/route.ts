@@ -15,8 +15,10 @@ export async function GET() {
   const now = new Date()
 
   // Agrupar vendas por cliente
+  type Venda = typeof vendas[0]
+  type Cliente = typeof clientes[0]
   const porCliente: Record<string, typeof vendas> = {}
-  vendas.forEach((v) => {
+  vendas.forEach((v: Venda) => {
     if (!porCliente[v.cliente]) porCliente[v.cliente] = []
     porCliente[v.cliente].push(v)
   })
@@ -25,7 +27,7 @@ export async function GET() {
   const totaisFaturamento: Record<string, number> = {}
   const totalPedidos: Record<string, number> = {}
   Object.entries(porCliente).forEach(([nome, vs]) => {
-    totaisFaturamento[nome] = vs.reduce((s, v) => s + Number(v.precoVenda), 0)
+    totaisFaturamento[nome] = vs.reduce((s: number, v: Venda) => s + Number(v.precoVenda), 0)
     totalPedidos[nome] = vs.length
   })
 
@@ -34,7 +36,7 @@ export async function GET() {
 
   // Indicações diretas por cliente
   const indicacoesDiretas: Record<string, number> = {}
-  clientes.forEach((c) => {
+  clientes.forEach((c: Cliente) => {
     if (c.indicadoPor) {
       indicacoesDiretas[c.indicadoPor] = (indicacoesDiretas[c.indicadoPor] || 0) + 1
     }
@@ -42,11 +44,11 @@ export async function GET() {
   const maxDiretas = Math.max(...Object.values(indicacoesDiretas), 1)
 
   // Valor de cadeia multinível
-  const clienteMap = Object.fromEntries(clientes.map((c) => [c.nome, c]))
+  const clienteMap = Object.fromEntries(clientes.map((c: Cliente) => [c.nome, c]))
   function getValorCadeia(nome: string, visited: Set<string> = new Set(), depth = 0): number {
     if (depth >= 6 || visited.has(nome)) return 0
     visited.add(nome)
-    const filhos = clientes.filter((c) => c.indicadoPor === nome)
+    const filhos = clientes.filter((c: Cliente) => c.indicadoPor === nome)
     let total = 0
     const decay = Math.pow(0.5, depth)
     for (const filho of filhos) {
@@ -70,12 +72,12 @@ export async function GET() {
 
     // Ciclo médio histórico (média de diasDuracao)
     const cicloMedio = vs.length > 0
-      ? vs.reduce((s, v) => s + v.diasDuracao, 0) / vs.length
+      ? vs.reduce((s: number, v: Venda) => s + v.diasDuracao, 0) / vs.length
       : 90
 
     // Dias sem comprar
     const ultimaCompra = vs.length > 0
-      ? new Date(Math.max(...vs.map((v) => new Date(v.data).getTime())))
+      ? new Date(Math.max(...vs.map((v: Venda) => new Date(v.data).getTime())))
       : null
     const diasSemComprar = ultimaCompra
       ? Math.floor((now.getTime() - ultimaCompra.getTime()) / 86400000)
@@ -88,7 +90,7 @@ export async function GET() {
     else if (pedidosCount >= 5) prob = Math.min(prob + 0.10, 0.99)
 
     // Longevidade
-    const datas = vs.map((v) => new Date(v.data).getTime())
+    const datas = vs.map((v: Venda) => new Date(v.data).getTime())
     const diasEntreFirstLast = datas.length >= 2
       ? (Math.max(...datas) - Math.min(...datas)) / 86400000
       : 0

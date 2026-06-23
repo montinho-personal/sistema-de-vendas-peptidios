@@ -13,7 +13,8 @@ export async function GET() {
   // Get client phones
   const clientes = await prisma.cadastroCliente.findMany()
   const phoneMap: Record<string, string> = {}
-  clientes.forEach(c => { phoneMap[c.nome] = c.telefone })
+  type Cliente = typeof clientes[0]
+  clientes.forEach((c: Cliente) => { phoneMap[c.nome] = c.telefone })
 
   // Group by cliente+produto
   const grouped: Record<string, { compras: { data: Date; proximaCompra: Date; precoVenda: number }[] }> = {}

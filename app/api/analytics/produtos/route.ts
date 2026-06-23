@@ -17,7 +17,8 @@ export async function GET() {
   const prodMap: Record<string, { nome: string; categoria: string; receita: number; custo: number; lucro: number; vendas: number; clientes: Set<string>; ult3m: number; ant3m: number }> = {}
 
   const catMap: Record<string, string> = {}
-  produtos.forEach(p => { catMap[p.nome] = p.categoria })
+  type Produto = typeof produtos[0]
+  produtos.forEach((p: Produto) => { catMap[p.nome] = p.categoria })
 
   for (const v of vendas) {
     if (!prodMap[v.produto]) prodMap[v.produto] = { nome: v.produto, categoria: catMap[v.produto] || '', receita: 0, custo: 0, lucro: 0, vendas: 0, clientes: new Set(), ult3m: 0, ant3m: 0 }

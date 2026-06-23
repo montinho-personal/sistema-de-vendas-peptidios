@@ -10,7 +10,8 @@ export async function GET() {
   const vendas = await prisma.venda.findMany({ orderBy: { data: 'desc' } })
   const clientes = await prisma.cadastroCliente.findMany()
   const phoneMap: Record<string, string> = {}
-  clientes.forEach(c => { phoneMap[c.nome] = c.telefone })
+  type Cliente = typeof clientes[0]
+  clientes.forEach((c: Cliente) => { phoneMap[c.nome] = c.telefone })
 
   const today = new Date()
   const grouped: Record<string, { data: Date; proximaCompra: Date; precoVenda: number; diasDuracao: number }[]> = {}

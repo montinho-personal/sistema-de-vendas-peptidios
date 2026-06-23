@@ -9,11 +9,12 @@ export async function GET() {
 
   const vendas = await prisma.venda.findMany({ orderBy: { data: 'asc' } })
 
-  const totalFat = vendas.reduce((s, v) => s + Number(v.precoVenda), 0)
-  const totalCusto = vendas.reduce((s, v) => s + Number(v.precoCusto), 0)
-  const totalLucroBruto = vendas.reduce((s, v) => s + Number(v.lucroBruto), 0)
-  const totalLucroLiq = vendas.reduce((s, v) => s + Number(v.lucroLiquido), 0)
-  const totalTaxas = vendas.reduce((s, v) => s + Number(v.taxa), 0)
+  type Venda = typeof vendas[0]
+  const totalFat = vendas.reduce((s: number, v: Venda) => s + Number(v.precoVenda), 0)
+  const totalCusto = vendas.reduce((s: number, v: Venda) => s + Number(v.precoCusto), 0)
+  const totalLucroBruto = vendas.reduce((s: number, v: Venda) => s + Number(v.lucroBruto), 0)
+  const totalLucroLiq = vendas.reduce((s: number, v: Venda) => s + Number(v.lucroLiquido), 0)
+  const totalTaxas = vendas.reduce((s: number, v: Venda) => s + Number(v.taxa), 0)
 
   // Por produto
   const prodMap: Record<string, { vendas: number; receita: number; custo: number; lucro: number }> = {}

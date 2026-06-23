@@ -30,30 +30,31 @@ export async function GET(req: NextRequest) {
     prisma.venda.findMany({ orderBy: { data: 'asc' } }),
   ])
 
-  const faturamento = vendasPeriodo.reduce((s, v) => s + Number(v.precoVenda), 0)
-  const lucroBruto = vendasPeriodo.reduce((s, v) => s + Number(v.lucroBruto), 0)
-  const lucroLiquido = vendasPeriodo.reduce((s, v) => s + Number(v.lucroLiquido), 0)
+  type Venda = typeof vendasPeriodo[0]
+  const faturamento = vendasPeriodo.reduce((s: number, v: Venda) => s + Number(v.precoVenda), 0)
+  const lucroBruto = vendasPeriodo.reduce((s: number, v: Venda) => s + Number(v.lucroBruto), 0)
+  const lucroLiquido = vendasPeriodo.reduce((s: number, v: Venda) => s + Number(v.lucroLiquido), 0)
   const pedidos = vendasPeriodo.length
   const ticketMedio = pedidos > 0 ? faturamento / pedidos : 0
   const margem = faturamento > 0 ? (lucroLiquido / faturamento) * 100 : 0
-  const vendasHojeTotal = vendasHoje.reduce((s, v) => s + Number(v.precoVenda), 0)
+  const vendasHojeTotal = vendasHoje.reduce((s: number, v: Venda) => s + Number(v.precoVenda), 0)
 
   // Gráfico últimos 8 meses
   const meses: { mes: string; faturamento: number; lucro: number }[] = []
   for (let i = 7; i >= 0; i--) {
     const d = new Date(now.getFullYear(), now.getMonth() - i, 1)
     const fim = new Date(d.getFullYear(), d.getMonth() + 1, 1)
-    const vs = todas.filter((v) => v.data >= d && v.data < fim)
+    const vs = todas.filter((v: Venda) => v.data >= d && v.data < fim)
     meses.push({
       mes: d.toLocaleDateString('pt-BR', { month: 'short', year: '2-digit' }),
-      faturamento: vs.reduce((s, v) => s + Number(v.precoVenda), 0),
-      lucro: vs.reduce((s, v) => s + Number(v.lucroLiquido), 0),
+      faturamento: vs.reduce((s: number, v: Venda) => s + Number(v.precoVenda), 0),
+      lucro: vs.reduce((s: number, v: Venda) => s + Number(v.lucroLiquido), 0),
     })
   }
 
   // Top 5 produtos
   const porProduto: Record<string, number> = {}
-  vendasPeriodo.forEach((v) => {
+  vendasPeriodo.forEach((v: Venda) => {
     porProduto[v.produto] = (porProduto[v.produto] || 0) + Number(v.precoVenda)
   })
   const topProdutos = Object.entries(porProduto)
@@ -63,7 +64,7 @@ export async function GET(req: NextRequest) {
 
   // Top 5 clientes
   const porCliente: Record<string, number> = {}
-  vendasPeriodo.forEach((v) => {
+  vendasPeriodo.forEach((v: Venda) => {
     porCliente[v.cliente] = (porCliente[v.cliente] || 0) + Number(v.precoVenda)
   })
   const topClientes = Object.entries(porCliente)

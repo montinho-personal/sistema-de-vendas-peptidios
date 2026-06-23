@@ -25,7 +25,8 @@ export async function GET() {
 
   // Agrupar por mês (YYYY-MM)
   const porMes: Record<string, number> = {}
-  vendas.forEach((v) => {
+  type Venda = typeof vendas[0]
+  vendas.forEach((v: Venda) => {
     const d = new Date(v.data)
     const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
     porMes[key] = (porMes[key] || 0) + Number(v.precoVenda)
@@ -101,10 +102,10 @@ export async function GET() {
   const porProduto: Record<string, number[]> = {}
   mesesOrdenados.forEach(([, ], idx) => {
     const key = mesesOrdenados[idx][0]
-    vendas.filter((v) => {
+    vendas.filter((v: Venda) => {
       const d = new Date(v.data)
       return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}` === key
-    }).forEach((v) => {
+    }).forEach((v: Venda) => {
       if (!porProduto[v.produto]) porProduto[v.produto] = Array(mesesOrdenados.length).fill(0)
       porProduto[v.produto][idx] += Number(v.precoVenda)
     })

@@ -27,15 +27,15 @@ export async function POST(req: NextRequest) {
     const d = new Date(v.data); return d >= mesAnterior && d < mesAtual
   })
 
-  const faturamentoTotal = vendas.reduce((s, v) => s + Number(v.precoVenda), 0)
-  const lucroTotal = vendas.reduce((s, v) => s + Number(v.lucroLiquido), 0)
+  const faturamentoTotal = vendas.reduce((s: number, v: typeof vendas[0]) => s + Number(v.precoVenda), 0)
+  const lucroTotal = vendas.reduce((s: number, v: typeof vendas[0]) => s + Number(v.lucroLiquido), 0)
   const margem = faturamentoTotal > 0 ? ((lucroTotal / faturamentoTotal) * 100).toFixed(1) : '0'
-  const fatMes = vendasMes.reduce((s, v) => s + Number(v.precoVenda), 0)
-  const fatMesAnt = vendasMesAnt.reduce((s, v) => s + Number(v.precoVenda), 0)
+  const fatMes = vendasMes.reduce((s: number, v: typeof vendas[0]) => s + Number(v.precoVenda), 0)
+  const fatMesAnt = vendasMesAnt.reduce((s: number, v: typeof vendas[0]) => s + Number(v.precoVenda), 0)
   const crescimento = fatMesAnt > 0 ? (((fatMes - fatMesAnt) / fatMesAnt) * 100).toFixed(1) : 'N/A'
 
   const porProduto: Record<string, { fat: number; meses: Record<string, number> }> = {}
-  vendas.forEach((v) => {
+  vendas.forEach((v: typeof vendas[0]) => {
     if (!porProduto[v.produto]) porProduto[v.produto] = { fat: 0, meses: {} }
     porProduto[v.produto].fat += Number(v.precoVenda)
     const d = new Date(v.data)
@@ -49,14 +49,14 @@ export async function POST(req: NextRequest) {
     .map(([nome, d]) => `${nome} (R$${d.fat.toLocaleString('pt-BR')})`)
 
   const porCliente: Record<string, number> = {}
-  vendas.forEach((v) => { porCliente[v.cliente] = (porCliente[v.cliente] || 0) + Number(v.precoVenda) })
+  vendas.forEach((v: typeof vendas[0]) => { porCliente[v.cliente] = (porCliente[v.cliente] || 0) + Number(v.precoVenda) })
   const top5Clientes = Object.entries(porCliente)
     .sort((a, b) => b[1] - a[1]).slice(0, 5)
     .map(([nome, fat]) => `${nome} (R$${fat.toLocaleString('pt-BR')})`)
 
-  const totalPerdido = vendasPerdidas.reduce((s, v) => s + Number(v.valor), 0)
+  const totalPerdido = vendasPerdidas.reduce((s: number, v: typeof vendasPerdidas[0]) => s + Number(v.valor), 0)
   const prodCritico = vendasPerdidas.length > 0
-    ? Object.entries(vendasPerdidas.reduce((acc: Record<string, number>, v) => {
+    ? Object.entries(vendasPerdidas.reduce((acc: Record<string, number>, v: typeof vendasPerdidas[0]) => {
         acc[v.produto] = (acc[v.produto] || 0) + Number(v.valor); return acc
       }, {})).sort((a, b) => b[1] - a[1])[0]?.[0]
     : 'N/A'
