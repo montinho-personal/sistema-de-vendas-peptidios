@@ -4,43 +4,48 @@ import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 
 export async function GET(req: NextRequest) {
-  const session = await getServerSession(authOptions)
-  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  try {
+    const session = await getServerSession(authOptions)
+    if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const { searchParams } = new URL(req.url)
-  const periodo = searchParams.get('periodo') || 'historico'
-  const busca = searchParams.get('busca') || ''
-  const orderBy = searchParams.get('orderBy') || 'data'
-  const order = searchParams.get('order') || 'desc'
+    const { searchParams } = new URL(req.url)
+    const periodo = searchParams.get('periodo') || 'historico'
+    const busca = searchParams.get('busca') || ''
+    const orderBy = searchParams.get('orderBy') || 'data'
+    const order = searchParams.get('order') || 'desc'
 
-  const now = new Date()
-  let from: Date | undefined
+    const now = new Date()
+    let from: Date | undefined
 
-  if (periodo === '7d') { from = new Date(now); from.setDate(now.getDate() - 7) }
-  else if (periodo === '15d') { from = new Date(now); from.setDate(now.getDate() - 15) }
-  else if (periodo === 'mes') { from = new Date(now.getFullYear(), now.getMonth(), 1) }
-  else if (periodo === 'trimestre') { from = new Date(now.getFullYear(), Math.floor(now.getMonth() / 3) * 3, 1) }
-  else if (periodo === 'semestre') { from = new Date(now.getFullYear(), Math.floor(now.getMonth() / 6) * 6, 1) }
-  else if (periodo === 'ano') { from = new Date(now.getFullYear(), 0, 1) }
+    if (periodo === '7d') { from = new Date(now); from.setDate(now.getDate() - 7) }
+    else if (periodo === '15d') { from = new Date(now); from.setDate(now.getDate() - 15) }
+    else if (periodo === 'mes') { from = new Date(now.getFullYear(), now.getMonth(), 1) }
+    else if (periodo === 'trimestre') { from = new Date(now.getFullYear(), Math.floor(now.getMonth() / 3) * 3, 1) }
+    else if (periodo === 'semestre') { from = new Date(now.getFullYear(), Math.floor(now.getMonth() / 6) * 6, 1) }
+    else if (periodo === 'ano') { from = new Date(now.getFullYear(), 0, 1) }
 
-  const allowedFields = ['data', 'cliente', 'produto', 'quantidade', 'precoVenda', 'precoCusto', 'lucroBruto', 'taxa', 'lucroLiquido', 'formaPagamento', 'proximaCompra']
-  const sortField = allowedFields.includes(orderBy) ? orderBy : 'data'
+    const allowedFields = ['data', 'cliente', 'produto', 'quantidade', 'precoVenda', 'precoCusto', 'lucroBruto', 'taxa', 'lucroLiquido', 'formaPagamento', 'proximaCompra']
+    const sortField = allowedFields.includes(orderBy) ? orderBy : 'data'
 
-  const where: Record<string, unknown> = {}
-  if (from) where.data = { gte: from }
-  if (busca) {
-    where.OR = [
-      { cliente: { contains: busca, mode: 'insensitive' } },
-      { produto: { contains: busca, mode: 'insensitive' } },
-    ]
+    const where: Record<string, unknown> = {}
+    if (from) where.data = { gte: from }
+    if (busca) {
+      where.OR = [
+        { cliente: { contains: busca, mode: 'insensitive' } },
+        { produto: { contains: busca, mode: 'insensitive' } },
+      ]
+    }
+
+    const vendas = await prisma.venda.findMany({
+      where,
+      orderBy: { [sortField]: order as 'asc' | 'desc' },
+    })
+
+    return NextResponse.json(vendas)
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : String(e)
+    return NextResponse.json({ error: msg }, { status: 500 })
   }
-
-  const vendas = await prisma.venda.findMany({
-    where,
-    orderBy: { [sortField]: order as 'asc' | 'desc' },
-  })
-
-  return NextResponse.json(vendas)
 }
 
 export async function POST(req: NextRequest) {
