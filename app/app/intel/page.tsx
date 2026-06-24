@@ -16,8 +16,10 @@ export default function IntelPage() {
   const [tipo, setTipo] = useState<'mensal'|'trimestral'|'anual'>('mensal')
   const reportRef = useRef<HTMLDivElement>(null)
 
+  const periodoApiMap = { mensal: 'mes', trimestral: 'trimestre', anual: 'ano' }
+
   useEffect(() => {
-    fetch('/api/analytics/dashboard?periodo=mes').then(r => r.json()).then(d => {
+    fetch(`/api/analytics/dashboard?periodo=${periodoApiMap[tipo]}`).then(r => r.json()).then(d => {
       setData({
         faturamentoMes: d.kpis.faturamento,
         faturamentoMesAnterior: 0,
@@ -30,7 +32,7 @@ export default function IntelPage() {
         totalVendasMes: d.kpis.pedidos,
       })
     })
-  }, [])
+  }, [tipo])
 
   async function gerarRelatorio() {
     setStreaming(true); setReport('')
@@ -59,7 +61,7 @@ export default function IntelPage() {
       {data && (
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
           {[
-            { label: 'Faturamento Mês', value: fmt(data.faturamentoMes), color: 'text-[#7c6fff]' },
+            { label: `Faturamento ${tipo === 'mensal' ? 'Mês' : tipo === 'trimestral' ? 'Trimestre' : 'Ano'}`, value: fmt(data.faturamentoMes), color: 'text-[#7c6fff]' },
             { label: 'Margem Média', value: `${data.margemMedia.toFixed(1)}%`, color: data.margemMedia > 30 ? 'text-green-400' : 'text-amber-400' },
             { label: 'Ticket Médio', value: fmt(data.ticketMedio), color: 'text-white' },
             { label: 'Produto Top', value: data.produtoTop, color: 'text-amber-400' },
