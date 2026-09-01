@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { Topbar } from '@/components/Topbar'
+import { formatBR } from '@/lib/date'
 
 interface Alerta { tipo: string; urgencia: string; cliente: string; produto: string; diasAtraso: number; ultimaCompra: string; cicloMedio: number; totalGasto: number; telefone: string }
 interface Oportunidade { cliente: string; produto: string; diasRestantes: number; proximaCompra: string; probabilidade: number; valorEstimado: number }
@@ -111,7 +112,7 @@ export default function HojePage() {
                 <tr key={i} className="border-b border-white/5 hover:bg-white/2">
                   <td className="px-3 py-2.5 text-white font-medium">{o.cliente}</td>
                   <td className="px-3 py-2.5 text-gray-300">{o.produto}</td>
-                  <td className="px-3 py-2.5 text-center text-gray-400">{new Date(o.proximaCompra + 'T12:00:00').toLocaleDateString('pt-BR')}</td>
+                  <td className="px-3 py-2.5 text-center text-gray-400">{formatBR(o.proximaCompra)}</td>
                   <td className="px-3 py-2.5 text-center">
                     <span className={`font-medium ${o.diasRestantes <= 0 ? 'text-red-400' : o.diasRestantes <= 7 ? 'text-amber-400' : 'text-gray-400'}`}>
                       {o.diasRestantes <= 0 ? `${Math.abs(o.diasRestantes)}d atrás` : `em ${o.diasRestantes}d`}

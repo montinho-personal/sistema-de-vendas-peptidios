@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { Topbar } from '@/components/Topbar'
 import { Modal } from '@/components/Modal'
+import { formatBR } from '@/lib/date'
 
 interface Score {
   id: string; nome: string; telefone: string; score: number; categoria: string
@@ -141,7 +142,7 @@ export default function ClientesScorePage() {
                 { label: 'Prob. Recompra', value: `${selected.probabilidadeRecompra}%` },
                 { label: 'Ciclo Médio', value: `${selected.cicloMedio} dias` },
                 { label: 'Dias Sem Comprar', value: selected.diasSemComprar === 9999 ? '—' : `${selected.diasSemComprar}d` },
-                { label: 'Última Compra', value: selected.ultimaCompra ? new Date(selected.ultimaCompra).toLocaleDateString('pt-BR') : '—' },
+                { label: 'Última Compra', value: selected.ultimaCompra ? formatBR(selected.ultimaCompra) : '—' },
                 { label: 'Indicações Diretas', value: String(selected.indicacoesDiretas) },
                 { label: 'Valor em Cadeia', value: fmt(selected.valorCadeia) },
                 { label: 'Indicado Por', value: selected.indicadoPor || '—' },

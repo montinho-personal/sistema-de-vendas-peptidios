@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { Topbar } from '@/components/Topbar'
+import { formatBR } from '@/lib/date'
 
 interface RecompraItem {
   cliente: string; telefone: string; produto: string
@@ -97,8 +98,8 @@ export default function RecompraPage() {
                 <tr key={i} className="border-b border-white/5 hover:bg-white/2">
                   <td className="px-3 py-2.5 text-white font-medium">{item.cliente}</td>
                   <td className="px-3 py-2.5 text-gray-300">{item.produto}</td>
-                  <td className="px-3 py-2.5 text-center text-gray-400">{new Date(item.ultimaCompra + 'T12:00:00').toLocaleDateString('pt-BR')}</td>
-                  <td className="px-3 py-2.5 text-center text-gray-400">{new Date(item.proximaCompra + 'T12:00:00').toLocaleDateString('pt-BR')}</td>
+                  <td className="px-3 py-2.5 text-center text-gray-400">{formatBR(item.ultimaCompra)}</td>
+                  <td className="px-3 py-2.5 text-center text-gray-400">{formatBR(item.proximaCompra)}</td>
                   <td className="px-3 py-2.5 text-center"><StatusBadge status={item.status} /></td>
                   <td className="px-3 py-2.5 text-center">
                     <span className={`text-sm font-medium ${item.probabilidade >= 70 ? 'text-green-400' : item.probabilidade >= 45 ? 'text-amber-400' : 'text-red-400'}`}>

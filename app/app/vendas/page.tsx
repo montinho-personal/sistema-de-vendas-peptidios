@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { Topbar } from '@/components/Topbar'
 import { Modal } from '@/components/Modal'
 import { toast } from '@/components/Toast'
+import { toDateStr, formatBR, addDays, getMesAno } from '@/lib/date'
 
 const PAGAMENTOS = ['Pix', 'Cartão de Crédito', 'Dinheiro', 'Transferência']
 const PERIODOS = [
@@ -32,28 +33,6 @@ interface Venda {
   diasDuracao: number
   mes: string
   ano: number
-}
-
-function localDate() {
-  const d = new Date()
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
-}
-
-function toDateStr(iso: string) {
-  const d = new Date(iso)
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
-}
-
-function addDays(dateStr: string, days: number) {
-  const d = new Date(dateStr + 'T12:00:00')
-  d.setDate(d.getDate() + days)
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
-}
-
-function getMesAno(dateStr: string) {
-  const d = new Date(dateStr + 'T12:00:00')
-  const meses = ['Janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro']
-  return { mes: meses[d.getMonth()], ano: d.getFullYear() }
 }
 
 export default function VendasPage() {
@@ -118,10 +97,10 @@ export default function VendasPage() {
     const sep = ';'
     const header = ['Data', 'Cliente', 'Produto', 'Qtd', 'Venda', 'Custo', 'L.Bruto', 'Taxa', 'L.Líquido', 'Pagamento', 'Próx.Compra'].join(sep)
     const rows = vendas.map(v => [
-      new Date(v.data).toLocaleDateString('pt-BR'), v.cliente, v.produto, v.quantidade,
+      formatBR(v.data), v.cliente, v.produto, v.quantidade,
       Number(v.precoVenda).toFixed(2), Number(v.precoCusto).toFixed(2), Number(v.lucroBruto).toFixed(2),
       Number(v.taxa).toFixed(2), Number(v.lucroLiquido).toFixed(2), v.formaPagamento,
-      new Date(v.proximaCompra).toLocaleDateString('pt-BR'),
+      formatBR(v.proximaCompra),
     ].map(f => String(f).includes(sep) ? `"${f}"` : f).join(sep))
     const csv = '﻿' + [header, ...rows].join('\n')
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
@@ -183,7 +162,7 @@ export default function VendasPage() {
                 <tr><td colSpan={12} className="text-center py-8 text-gray-500">Nenhuma venda encontrada</td></tr>
               ) : vendas.map(v => (
                 <tr key={v.id} className="border-b border-white/5 hover:bg-white/2 transition-colors">
-                  <td className="px-3 py-2.5 whitespace-nowrap text-gray-300">{new Date(v.data).toLocaleDateString('pt-BR')}</td>
+                  <td className="px-3 py-2.5 whitespace-nowrap text-gray-300">{formatBR(v.data)}</td>
                   <td className="px-3 py-2.5 text-white font-medium max-w-[140px] truncate">{v.cliente}</td>
                   <td className="px-3 py-2.5 text-gray-300 max-w-[140px] truncate">{v.produto}</td>
                   <td className="px-3 py-2.5 text-center text-gray-300">{v.quantidade}</td>
@@ -193,7 +172,7 @@ export default function VendasPage() {
                   <td className="px-3 py-2.5 text-right text-amber-400">R${Number(v.taxa).toLocaleString('pt-BR',{minimumFractionDigits:2})}</td>
                   <td className="px-3 py-2.5 text-right font-medium text-green-400">R${Number(v.lucroLiquido).toLocaleString('pt-BR',{minimumFractionDigits:2})}</td>
                   <td className="px-3 py-2.5 text-gray-400 whitespace-nowrap">{v.formaPagamento}</td>
-                  <td className="px-3 py-2.5 text-[#7c6fff] whitespace-nowrap">{new Date(v.proximaCompra).toLocaleDateString('pt-BR')}</td>
+                  <td className="px-3 py-2.5 text-[#7c6fff] whitespace-nowrap">{formatBR(v.proximaCompra)}</td>
                   <td className="px-3 py-2.5">
                     <div className="flex gap-1">
                       <button onClick={() => setEditando({ ...v, data: toDateStr(v.data), proximaCompra: toDateStr(v.proximaCompra) })}

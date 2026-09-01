@@ -4,13 +4,9 @@ import { useState, useEffect } from 'react'
 import { Topbar } from '@/components/Topbar'
 import { Modal } from '@/components/Modal'
 import { toast } from '@/components/Toast'
+import { formatBR, localDate } from '@/lib/date'
 
 const MOTIVOS = ['Sem estoque', 'Preço alto', 'Concorrência', 'Cliente desistiu', 'Prazo', 'Outro']
-
-function localDate() {
-  const d = new Date()
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
-}
 
 interface VP { id: string; data: string; cliente: string; produto: string; valor: number; quantidade: number; motivo: string }
 
@@ -109,7 +105,7 @@ export default function VendasPerdidasPage() {
               : sorted.length === 0 ? <tr><td colSpan={7} className="text-center py-8 text-gray-500">Nenhum registro</td></tr>
               : sorted.map(v => (
                 <tr key={v.id} className="border-b border-white/5 hover:bg-white/2">
-                  <td className="px-3 py-2.5 text-gray-300">{new Date(v.data).toLocaleDateString('pt-BR')}</td>
+                  <td className="px-3 py-2.5 text-gray-300">{formatBR(v.data)}</td>
                   <td className="px-3 py-2.5 text-white">{v.cliente}</td>
                   <td className="px-3 py-2.5 text-gray-300">{v.produto}</td>
                   <td className="px-3 py-2.5 text-red-400 font-medium">R$ {Number(v.valor).toLocaleString('pt-BR',{minimumFractionDigits:2})}</td>

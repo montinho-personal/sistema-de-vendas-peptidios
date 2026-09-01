@@ -4,25 +4,9 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { Topbar } from '@/components/Topbar'
 import { toast } from '@/components/Toast'
+import { formatBR, localDate, addDays, getMesAno } from '@/lib/date'
 
 const PAGAMENTOS = ['Pix', 'Cartão de Crédito', 'Dinheiro', 'Transferência']
-
-function localDate() {
-  const d = new Date()
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
-}
-
-function addDays(dateStr: string, days: number) {
-  const d = new Date(dateStr + 'T12:00:00')
-  d.setDate(d.getDate() + days)
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
-}
-
-function getMesAno(dateStr: string) {
-  const d = new Date(dateStr + 'T12:00:00')
-  const meses = ['Janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro']
-  return { mes: meses[d.getMonth()], ano: d.getFullYear() }
-}
 
 interface FormData {
   data: string
@@ -239,7 +223,7 @@ export default function NovaVendaPage() {
               {proximaCompra && (
                 <div className="flex justify-between text-sm border-t border-white/5 pt-3">
                   <span className="text-gray-400">Próxima Compra</span>
-                  <span className="text-[#7c6fff]">{new Date(proximaCompra + 'T12:00:00').toLocaleDateString('pt-BR')}</span>
+                  <span className="text-[#7c6fff]">{formatBR(proximaCompra)}</span>
                 </div>
               )}
             </div>
