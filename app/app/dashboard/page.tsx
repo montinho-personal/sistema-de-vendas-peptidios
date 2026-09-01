@@ -11,15 +11,19 @@ const PERIODOS = [
   { value: '7d', label: '7 dias' },
   { value: '15d', label: '15 dias' },
   { value: 'mes', label: 'Mês' },
+  { value: 'mes-passado', label: 'Mês passado' },
   { value: 'trimestre', label: 'Trimestre' },
   { value: 'semestre', label: 'Semestre' },
   { value: 'ano', label: 'Ano' },
   { value: 'historico', label: 'Histórico' },
 ]
 
+interface Mes { value: string; label: string }
+
 interface DashData {
   kpis: { vendasHoje: number; faturamento: number; lucroBruto: number; lucroLiquido: number; pedidos: number; ticketMedio: number; margem: number }
   grafico: { mes: string; faturamento: number; lucro: number }[]
+  mesesDisponiveis: Mes[]
   topProdutos: { nome: string; total: number }[]
   topClientes: { nome: string; total: number }[]
 }
@@ -38,13 +42,21 @@ export default function DashboardPage() {
   const [periodo, setPeriodo] = useState('mes')
   const [data, setData] = useState<DashData | null>(null)
   const [loading, setLoading] = useState(true)
+  // Mantido fora de `data` para o seletor não sumir durante os recarregamentos.
+  const [meses, setMeses] = useState<Mes[]>([])
 
   useEffect(() => {
     setLoading(true)
     fetch(`/api/analytics/dashboard?periodo=${periodo}`)
       .then(r => r.json())
-      .then(d => { setData(d); setLoading(false) })
+      .then(d => {
+        setData(d)
+        if (d.mesesDisponiveis) setMeses(d.mesesDisponiveis)
+        setLoading(false)
+      })
   }, [periodo])
+
+  const mesSelecionado = meses.find(m => m.value === periodo)
 
   const fmt = (n: number) => `R$ ${n.toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`
 
@@ -52,13 +64,21 @@ export default function DashboardPage() {
     <div>
       <Topbar title="📊 Dashboard" subtitle="Visão geral do negócio" />
 
-      <div className="flex flex-wrap gap-1 mb-6">
+      <div className="flex flex-wrap items-center gap-1 mb-6">
         {PERIODOS.map(p => (
           <button key={p.value} onClick={() => setPeriodo(p.value)}
             className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${periodo === p.value ? 'bg-[#7c6fff] text-white' : 'bg-[#131626] text-gray-400 hover:text-white border border-white/5'}`}>
             {p.label}
           </button>
         ))}
+
+        {meses.length > 0 && (
+          <select value={mesSelecionado ? periodo : ''} onChange={e => { if (e.target.value) setPeriodo(e.target.value) }}
+            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors border focus:outline-none focus:border-[#7c6fff] ${mesSelecionado ? 'bg-[#7c6fff] text-white border-transparent' : 'bg-[#131626] text-gray-400 hover:text-white border-white/5'}`}>
+            <option value="">Escolher mês…</option>
+            {meses.map(m => <option key={m.value} value={m.value}>{m.label}</option>)}
+          </select>
+        )}
       </div>
 
       {loading || !data ? (
@@ -77,14 +97,14 @@ export default function DashboardPage() {
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
             <div className="bg-[#131626] border border-white/5 rounded-2xl p-4">
-              <h3 className="text-sm font-medium text-gray-300 mb-4">Faturamento Mensal (últimos 8 meses)</h3>
+              <h3 className="text-sm font-medium text-gray-300 mb-4">Faturamento Mensal (8 meses até {data.grafico[data.grafico.length - 1]?.mes})</h3>
               <Bar data={{
                 labels: data.grafico.map(m => m.mes),
                 datasets: [{ label: 'Faturamento', data: data.grafico.map(m => m.faturamento), backgroundColor: '#7c6fff88', borderColor: '#7c6fff', borderWidth: 1, borderRadius: 4 }],
               }} options={{ responsive: true, plugins: { legend: { display: false } }, scales: { x: { ticks: { color: '#6b7280', font: { size: 11 } }, grid: { color: '#ffffff08' } }, y: { ticks: { color: '#6b7280', font: { size: 11 }, callback: (v) => `R$${Number(v).toLocaleString('pt-BR',{maximumFractionDigits:0})}` }, grid: { color: '#ffffff08' } } } }} />
             </div>
             <div className="bg-[#131626] border border-white/5 rounded-2xl p-4">
-              <h3 className="text-sm font-medium text-gray-300 mb-4">Lucro Mensal (últimos 8 meses)</h3>
+              <h3 className="text-sm font-medium text-gray-300 mb-4">Lucro Mensal (8 meses até {data.grafico[data.grafico.length - 1]?.mes})</h3>
               <Bar data={{
                 labels: data.grafico.map(m => m.mes),
                 datasets: [{ label: 'Lucro Líquido', data: data.grafico.map(m => m.lucro), backgroundColor: '#22c55e55', borderColor: '#22c55e', borderWidth: 1, borderRadius: 4 }],
