@@ -226,6 +226,12 @@ export default function NovaVendaPage() {
                   <span className="text-[#7c6fff]">{formatBR(proximaCompra)}</span>
                 </div>
               )}
+              {(Number(form.taxa) || 0) > lucroBruto && (
+                <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-3 text-xs text-red-400">
+                  ⚠️ A taxa (R$ {(Number(form.taxa) || 0).toFixed(2)}) é maior que o lucro bruto (R$ {lucroBruto.toFixed(2)}).
+                  Esta venda será registrada com prejuízo de R$ {Math.abs(lucroLiquido).toFixed(2)}. Confira o valor da taxa.
+                </div>
+              )}
             </div>
           </div>
         </div>

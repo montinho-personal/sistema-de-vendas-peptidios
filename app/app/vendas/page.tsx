@@ -138,7 +138,7 @@ export default function VendasPage() {
         </div>
         <div className="bg-[#131626] border border-white/5 rounded-xl p-3">
           <p className="text-xs text-gray-400">Lucro Líquido</p>
-          <p className="text-lg font-bold text-green-400">R$ {totLL.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+          <p className={`text-lg font-bold ${totLL >= 0 ? 'text-green-400' : 'text-red-400'}`}>R$ {totLL.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
         </div>
       </div>
 
@@ -168,9 +168,9 @@ export default function VendasPage() {
                   <td className="px-3 py-2.5 text-center text-gray-300">{v.quantidade}</td>
                   <td className="px-3 py-2.5 text-right text-white">R${Number(v.precoVenda).toLocaleString('pt-BR',{minimumFractionDigits:2})}</td>
                   <td className="px-3 py-2.5 text-right text-gray-400">R${Number(v.precoCusto).toLocaleString('pt-BR',{minimumFractionDigits:2})}</td>
-                  <td className="px-3 py-2.5 text-right text-green-400">R${Number(v.lucroBruto).toLocaleString('pt-BR',{minimumFractionDigits:2})}</td>
+                  <td className={`px-3 py-2.5 text-right ${Number(v.lucroBruto) >= 0 ? 'text-green-400' : 'text-red-400'}`}>R${Number(v.lucroBruto).toLocaleString('pt-BR',{minimumFractionDigits:2})}</td>
                   <td className="px-3 py-2.5 text-right text-amber-400">R${Number(v.taxa).toLocaleString('pt-BR',{minimumFractionDigits:2})}</td>
-                  <td className="px-3 py-2.5 text-right font-medium text-green-400">R${Number(v.lucroLiquido).toLocaleString('pt-BR',{minimumFractionDigits:2})}</td>
+                  <td className={`px-3 py-2.5 text-right font-medium ${Number(v.lucroLiquido) >= 0 ? 'text-green-400' : 'text-red-400'}`}>R${Number(v.lucroLiquido).toLocaleString('pt-BR',{minimumFractionDigits:2})}</td>
                   <td className="px-3 py-2.5 text-gray-400 whitespace-nowrap">{v.formaPagamento}</td>
                   <td className="px-3 py-2.5 text-[#7c6fff] whitespace-nowrap">{formatBR(v.proximaCompra)}</td>
                   <td className="px-3 py-2.5">
@@ -218,12 +218,26 @@ export default function VendasPage() {
             <div><label className="text-xs text-gray-400 mb-1 block">Forma de Pagamento</label>
               <select className={inp} value={editando.formaPagamento} onChange={e => setEditando(v => v ? { ...v, formaPagamento: e.target.value } : v)}>
                 {PAGAMENTOS.map(p => <option key={p}>{p}</option>)}</select></div>
-            <div className="bg-[#0d0f1a] rounded-lg p-3 text-sm space-y-1">
-              <div className="flex justify-between"><span className="text-gray-400">L.Bruto</span>
-                <span className="text-green-400">R$ {(Number(editando.precoVenda) - Number(editando.precoCusto)).toFixed(2)}</span></div>
-              <div className="flex justify-between"><span className="text-gray-400">L.Líquido</span>
-                <span className="text-green-400 font-bold">R$ {(Number(editando.precoVenda) - Number(editando.precoCusto) - Number(editando.taxa)).toFixed(2)}</span></div>
-            </div>
+            {(() => {
+              const lb = Number(editando.precoVenda) - Number(editando.precoCusto)
+              const ll = lb - Number(editando.taxa)
+              return (
+                <>
+                  <div className="bg-[#0d0f1a] rounded-lg p-3 text-sm space-y-1">
+                    <div className="flex justify-between"><span className="text-gray-400">L.Bruto</span>
+                      <span className={lb >= 0 ? 'text-green-400' : 'text-red-400'}>R$ {lb.toFixed(2)}</span></div>
+                    <div className="flex justify-between"><span className="text-gray-400">L.Líquido</span>
+                      <span className={`font-bold ${ll >= 0 ? 'text-green-400' : 'text-red-400'}`}>R$ {ll.toFixed(2)}</span></div>
+                  </div>
+                  {Number(editando.taxa) > lb && (
+                    <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-3 text-xs text-red-400">
+                      ⚠️ A taxa (R$ {Number(editando.taxa).toFixed(2)}) é maior que o lucro bruto (R$ {lb.toFixed(2)}).
+                      Esta venda ficará com prejuízo de R$ {Math.abs(ll).toFixed(2)}. Confira o valor da taxa.
+                    </div>
+                  )}
+                </>
+              )
+            })()}
             <button onClick={handleSave} className="w-full bg-[#7c6fff] hover:bg-[#6a5dee] text-white py-2 rounded-lg font-semibold">Salvar</button>
           </div>
         )}
