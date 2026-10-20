@@ -44,6 +44,9 @@ export default function VendasPage() {
   const [sortKey, setSortKey] = useState('data')
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc')
   const [editando, setEditando] = useState<Venda | null>(null)
+  const [comissaoPct, setComissaoPct] = useState('0')
+  // Qual dos dois campos o usuário digitou por último manda no outro.
+  const [comissaoBase, setComissaoBase] = useState<'pct' | 'valor'>('valor')
   const [excluindo, setExcluindo] = useState<string | null>(null)
   const [clientes, setClientes] = useState<string[]>([])
   const [produtos, setProdutos] = useState<string[]>([])
@@ -61,6 +64,23 @@ export default function VendasPage() {
     fetch('/api/clientes').then(r => r.json()).then(d => setClientes(d.map((c: { nome: string }) => c.nome)))
     fetch('/api/produtos').then(r => r.json()).then(d => setProdutos(d.map((p: { nome: string }) => p.nome)))
   }, [])
+
+  const precoVendaEdit = Number(editando?.precoVenda) || 0
+
+  useEffect(() => {
+    if (comissaoBase !== 'pct') return
+    const valor = Number((precoVendaEdit * (Number(comissaoPct) || 0) / 100).toFixed(2))
+    // Devolver o mesmo objeto quando nada muda evita um ciclo de re-render.
+    setEditando(v => (v && v.comissao !== valor) ? { ...v, comissao: valor } : v)
+  }, [precoVendaEdit, comissaoPct, comissaoBase])
+
+  // valor -> %
+  function handleComissaoValor(valor: string) {
+    setComissaoBase('valor')
+    setEditando(v => v ? { ...v, comissao: Number(valor) } : v)
+    const pct = precoVendaEdit > 0 ? ((Number(valor) || 0) / precoVendaEdit) * 100 : 0
+    setComissaoPct(pct ? String(Number(pct.toFixed(2))) : '0')
+  }
 
   function handleSort(key: string) {
     if (sortKey === key) setSortOrder(o => o === 'asc' ? 'desc' : 'asc')
@@ -177,7 +197,12 @@ export default function VendasPage() {
                   <td className="px-3 py-2.5 text-[#7c6fff] whitespace-nowrap">{formatBR(v.proximaCompra)}</td>
                   <td className="px-3 py-2.5">
                     <div className="flex gap-1">
-                      <button onClick={() => setEditando({ ...v, data: toDateStr(v.data), proximaCompra: toDateStr(v.proximaCompra) })}
+                      <button onClick={() => {
+                        const pct = Number(v.precoVenda) > 0 ? (Number(v.comissao || 0) / Number(v.precoVenda)) * 100 : 0
+                        setComissaoPct(pct ? String(Number(pct.toFixed(2))) : '0')
+                        setComissaoBase('valor')
+                        setEditando({ ...v, data: toDateStr(v.data), proximaCompra: toDateStr(v.proximaCompra) })
+                      }}
                         className="p-1 hover:text-[#7c6fff] text-gray-500 transition-colors">✏️</button>
                       <button onClick={() => setExcluindo(v.id)} className="p-1 hover:text-red-400 text-gray-500 transition-colors">✕</button>
                     </div>
@@ -217,8 +242,14 @@ export default function VendasPage() {
               <div><label className="text-xs text-gray-400 mb-1 block">Taxa</label>
                 <input type="number" step="0.01" className={inp} value={editando.taxa} onChange={e => setEditando(v => v ? { ...v, taxa: Number(e.target.value) } : v)} /></div>
             </div>
-            <div><label className="text-xs text-gray-400 mb-1 block">Comissão</label>
-              <input type="number" step="0.01" className={inp} value={editando.comissao ?? 0} onChange={e => setEditando(v => v ? { ...v, comissao: Number(e.target.value) } : v)} /></div>
+            <div className="grid grid-cols-2 gap-3">
+              <div><label className="text-xs text-gray-400 mb-1 block">Comissão (%)</label>
+                <input type="number" step="0.01" className={inp} value={comissaoPct}
+                  onChange={e => { setComissaoBase('pct'); setComissaoPct(e.target.value) }} /></div>
+              <div><label className="text-xs text-gray-400 mb-1 block">Comissão (R$)</label>
+                <input type="number" step="0.01" className={inp} value={editando.comissao ?? 0}
+                  onChange={e => handleComissaoValor(e.target.value)} /></div>
+            </div>
             <div><label className="text-xs text-gray-400 mb-1 block">Forma de Pagamento</label>
               <select className={inp} value={editando.formaPagamento} onChange={e => setEditando(v => v ? { ...v, formaPagamento: e.target.value } : v)}>
                 {PAGAMENTOS.map(p => <option key={p}>{p}</option>)}</select></div>

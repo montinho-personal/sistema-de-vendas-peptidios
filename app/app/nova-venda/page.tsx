@@ -28,6 +28,9 @@ export default function NovaVendaPage() {
   const [filtroCliente, setFiltroCliente] = useState('')
   const [filtroProduto, setFiltroProduto] = useState('')
   const [saving, setSaving] = useState(false)
+  const [comissaoPct, setComissaoPct] = useState('0')
+  // Qual dos dois campos o usuário digitou por último manda no outro.
+  const [comissaoBase, setComissaoBase] = useState<'pct' | 'valor'>('pct')
 
   const [form, setForm] = useState<FormData>({
     data: localDate(),
@@ -46,6 +49,22 @@ export default function NovaVendaPage() {
     fetch('/api/clientes').then(r => r.json()).then(d => setClientes(d.map((c: { nome: string }) => c.nome)))
     fetch('/api/produtos').then(r => r.json()).then(d => setProdutos(d))
   }, [])
+
+  const precoVendaNum = Number(form.precoVenda) || 0
+
+  useEffect(() => {
+    if (comissaoBase !== 'pct') return
+    const valor = precoVendaNum * (Number(comissaoPct) || 0) / 100
+    setForm(f => ({ ...f, comissao: valor ? valor.toFixed(2) : '0' }))
+  }, [precoVendaNum, comissaoPct, comissaoBase])
+
+  // valor -> %
+  function handleComissaoValor(valor: string) {
+    setComissaoBase('valor')
+    setForm(f => ({ ...f, comissao: valor }))
+    const pct = precoVendaNum > 0 ? ((Number(valor) || 0) / precoVendaNum) * 100 : 0
+    setComissaoPct(pct ? String(Number(pct.toFixed(2))) : '0')
+  }
 
   const lucroBruto = (Number(form.precoVenda) || 0) - (Number(form.precoCusto) || 0)
   const lucroLiquido = lucroBruto - (Number(form.taxa) || 0) - (Number(form.comissao) || 0)
@@ -186,9 +205,17 @@ export default function NovaVendaPage() {
               </div>
             </div>
 
-            <div>
-              <label className={label}>Comissão (R$)</label>
-              <input type="number" min="0" step="0.01" className={inp} value={form.comissao} onChange={e => setForm(f => ({ ...f, comissao: e.target.value }))} placeholder="0.00" />
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className={label}>Comissão (%)</label>
+                <input type="number" min="0" step="0.01" className={inp} value={comissaoPct}
+                  onChange={e => { setComissaoBase('pct'); setComissaoPct(e.target.value) }} placeholder="0" />
+              </div>
+              <div>
+                <label className={label}>Comissão (R$)</label>
+                <input type="number" min="0" step="0.01" className={inp} value={form.comissao}
+                  onChange={e => handleComissaoValor(e.target.value)} placeholder="0.00" />
+              </div>
             </div>
 
             <button type="submit" disabled={saving}
@@ -222,7 +249,7 @@ export default function NovaVendaPage() {
                 <span className="text-amber-400">- R$ {(Number(form.taxa) || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
               </div>
               <div className="flex justify-between text-sm">
-                <span className="text-gray-400">Comissão</span>
+                <span className="text-gray-400">Comissão{(Number(comissaoPct) || 0) > 0 ? ` (${Number(comissaoPct)}%)` : ''}</span>
                 <span className="text-amber-400">- R$ {(Number(form.comissao) || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
               </div>
               <div className="flex justify-between text-sm border-t border-white/5 pt-3">
