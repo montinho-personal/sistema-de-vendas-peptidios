@@ -24,7 +24,8 @@ export default function HojePage() {
   const [tab, setTab] = useState<'alertas'|'oportunidades'|'tendencias'>('alertas')
   const [verDispensados, setVerDispensados] = useState(false)
 
-  const carregar = () => fetch('/api/analytics/hoje').then(r => r.json()).then(d => { setData(d); setLoading(false) })
+  const carregar = () => fetch('/api/analytics/hoje', { cache: 'no-store' })
+    .then(r => r.json()).then(d => { setData(d); setLoading(false) })
 
   useEffect(() => { carregar() }, [])
 
@@ -38,6 +39,7 @@ export default function HojePage() {
     await fetch('/api/alertas/dispensar', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ cliente: a.cliente, produto: a.produto, ultimaCompra: a.ultimaCompra, motivo }),
+      keepalive: true,
     })
     carregar()
   }
