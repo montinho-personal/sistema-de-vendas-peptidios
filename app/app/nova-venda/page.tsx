@@ -18,6 +18,7 @@ interface FormData {
   diasDuracao: string
   formaPagamento: string
   taxa: string
+  comissao: string
 }
 
 export default function NovaVendaPage() {
@@ -38,6 +39,7 @@ export default function NovaVendaPage() {
     diasDuracao: '90',
     formaPagamento: 'Pix',
     taxa: '0',
+    comissao: '0',
   })
 
   useEffect(() => {
@@ -46,7 +48,7 @@ export default function NovaVendaPage() {
   }, [])
 
   const lucroBruto = (Number(form.precoVenda) || 0) - (Number(form.precoCusto) || 0)
-  const lucroLiquido = lucroBruto - (Number(form.taxa) || 0)
+  const lucroLiquido = lucroBruto - (Number(form.taxa) || 0) - (Number(form.comissao) || 0)
   const proximaCompra = form.data && form.diasDuracao ? addDays(form.data, Number(form.diasDuracao)) : ''
 
   function handleProdutoSelect(nome: string) {
@@ -184,6 +186,11 @@ export default function NovaVendaPage() {
               </div>
             </div>
 
+            <div>
+              <label className={label}>Comissão (R$)</label>
+              <input type="number" min="0" step="0.01" className={inp} value={form.comissao} onChange={e => setForm(f => ({ ...f, comissao: e.target.value }))} placeholder="0.00" />
+            </div>
+
             <button type="submit" disabled={saving}
               className="w-full bg-[#7c6fff] hover:bg-[#6a5dee] disabled:opacity-60 text-white font-semibold py-2.5 rounded-lg transition-colors">
               {saving ? 'Salvando...' : 'Registrar Venda'}
@@ -214,6 +221,10 @@ export default function NovaVendaPage() {
                 <span className="text-gray-400">Taxa</span>
                 <span className="text-amber-400">- R$ {(Number(form.taxa) || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
               </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-400">Comissão</span>
+                <span className="text-amber-400">- R$ {(Number(form.comissao) || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+              </div>
               <div className="flex justify-between text-sm border-t border-white/5 pt-3">
                 <span className="text-gray-300 font-medium">Lucro Líquido</span>
                 <span className={lucroLiquido >= 0 ? 'text-green-400 font-bold' : 'text-red-400 font-bold'}>
@@ -226,10 +237,11 @@ export default function NovaVendaPage() {
                   <span className="text-[#7c6fff]">{formatBR(proximaCompra)}</span>
                 </div>
               )}
-              {(Number(form.taxa) || 0) > lucroBruto && (
+              {lucroLiquido < 0 && lucroBruto >= 0 && (
                 <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-3 text-xs text-red-400">
-                  ⚠️ A taxa (R$ {(Number(form.taxa) || 0).toFixed(2)}) é maior que o lucro bruto (R$ {lucroBruto.toFixed(2)}).
-                  Esta venda será registrada com prejuízo de R$ {Math.abs(lucroLiquido).toFixed(2)}. Confira o valor da taxa.
+                  ⚠️ A taxa e a comissão (R$ {((Number(form.taxa) || 0) + (Number(form.comissao) || 0)).toFixed(2)} somadas)
+                  são maiores que o lucro bruto (R$ {lucroBruto.toFixed(2)}).
+                  Esta venda será registrada com prejuízo de R$ {Math.abs(lucroLiquido).toFixed(2)}. Confira os valores.
                 </div>
               )}
             </div>

@@ -27,6 +27,7 @@ interface Venda {
   precoCusto: number
   lucroBruto: number
   taxa: number
+  comissao: number
   lucroLiquido: number
   formaPagamento: string
   proximaCompra: string
@@ -74,7 +75,7 @@ export default function VendasPage() {
   async function handleSave() {
     if (!editando) return
     const lb = Number(editando.precoVenda) - Number(editando.precoCusto)
-    const ll = lb - Number(editando.taxa)
+    const ll = lb - Number(editando.taxa) - Number(editando.comissao || 0)
     const pc = addDays(toDateStr(editando.data), Number(editando.diasDuracao))
     const { mes, ano } = getMesAno(toDateStr(editando.data))
     const res = await fetch(`/api/vendas/${editando.id}`, {
@@ -95,11 +96,11 @@ export default function VendasPage() {
 
   function exportCSV() {
     const sep = ';'
-    const header = ['Data', 'Cliente', 'Produto', 'Qtd', 'Venda', 'Custo', 'L.Bruto', 'Taxa', 'L.Líquido', 'Pagamento', 'Próx.Compra'].join(sep)
+    const header = ['Data', 'Cliente', 'Produto', 'Qtd', 'Venda', 'Custo', 'L.Bruto', 'Taxa', 'Comissão', 'L.Líquido', 'Pagamento', 'Próx.Compra'].join(sep)
     const rows = vendas.map(v => [
       formatBR(v.data), v.cliente, v.produto, v.quantidade,
       Number(v.precoVenda).toFixed(2), Number(v.precoCusto).toFixed(2), Number(v.lucroBruto).toFixed(2),
-      Number(v.taxa).toFixed(2), Number(v.lucroLiquido).toFixed(2), v.formaPagamento,
+      Number(v.taxa).toFixed(2), Number(v.comissao || 0).toFixed(2), Number(v.lucroLiquido).toFixed(2), v.formaPagamento,
       formatBR(v.proximaCompra),
     ].map(f => String(f).includes(sep) ? `"${f}"` : f).join(sep))
     const csv = '﻿' + [header, ...rows].join('\n')
@@ -147,7 +148,7 @@ export default function VendasPage() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-white/5 text-xs text-gray-400">
-                {[['data','Data'],['cliente','Cliente'],['produto','Produto'],['quantidade','Qtd'],['precoVenda','Venda'],['precoCusto','Custo'],['lucroBruto','L.Bruto'],['taxa','Taxa'],['lucroLiquido','L.Líquido'],['formaPagamento','Pgto'],['proximaCompra','Próx.Compra']].map(([k,l]) => (
+                {[['data','Data'],['cliente','Cliente'],['produto','Produto'],['quantidade','Qtd'],['precoVenda','Venda'],['precoCusto','Custo'],['lucroBruto','L.Bruto'],['taxa','Taxa'],['comissao','Comissão'],['lucroLiquido','L.Líquido'],['formaPagamento','Pgto'],['proximaCompra','Próx.Compra']].map(([k,l]) => (
                   <th key={k} onClick={() => handleSort(k)} className="px-3 py-3 text-left cursor-pointer hover:text-white whitespace-nowrap">
                     {l}<SortIcon col={k} />
                   </th>
@@ -157,9 +158,9 @@ export default function VendasPage() {
             </thead>
             <tbody>
               {loading ? (
-                <tr><td colSpan={12} className="text-center py-8 text-gray-500">Carregando...</td></tr>
+                <tr><td colSpan={13} className="text-center py-8 text-gray-500">Carregando...</td></tr>
               ) : vendas.length === 0 ? (
-                <tr><td colSpan={12} className="text-center py-8 text-gray-500">Nenhuma venda encontrada</td></tr>
+                <tr><td colSpan={13} className="text-center py-8 text-gray-500">Nenhuma venda encontrada</td></tr>
               ) : vendas.map(v => (
                 <tr key={v.id} className="border-b border-white/5 hover:bg-white/2 transition-colors">
                   <td className="px-3 py-2.5 whitespace-nowrap text-gray-300">{formatBR(v.data)}</td>
@@ -170,6 +171,7 @@ export default function VendasPage() {
                   <td className="px-3 py-2.5 text-right text-gray-400">R${Number(v.precoCusto).toLocaleString('pt-BR',{minimumFractionDigits:2})}</td>
                   <td className={`px-3 py-2.5 text-right ${Number(v.lucroBruto) >= 0 ? 'text-green-400' : 'text-red-400'}`}>R${Number(v.lucroBruto).toLocaleString('pt-BR',{minimumFractionDigits:2})}</td>
                   <td className="px-3 py-2.5 text-right text-amber-400">R${Number(v.taxa).toLocaleString('pt-BR',{minimumFractionDigits:2})}</td>
+                  <td className="px-3 py-2.5 text-right text-amber-400">R${Number(v.comissao || 0).toLocaleString('pt-BR',{minimumFractionDigits:2})}</td>
                   <td className={`px-3 py-2.5 text-right font-medium ${Number(v.lucroLiquido) >= 0 ? 'text-green-400' : 'text-red-400'}`}>R${Number(v.lucroLiquido).toLocaleString('pt-BR',{minimumFractionDigits:2})}</td>
                   <td className="px-3 py-2.5 text-gray-400 whitespace-nowrap">{v.formaPagamento}</td>
                   <td className="px-3 py-2.5 text-[#7c6fff] whitespace-nowrap">{formatBR(v.proximaCompra)}</td>
@@ -215,24 +217,29 @@ export default function VendasPage() {
               <div><label className="text-xs text-gray-400 mb-1 block">Taxa</label>
                 <input type="number" step="0.01" className={inp} value={editando.taxa} onChange={e => setEditando(v => v ? { ...v, taxa: Number(e.target.value) } : v)} /></div>
             </div>
+            <div><label className="text-xs text-gray-400 mb-1 block">Comissão</label>
+              <input type="number" step="0.01" className={inp} value={editando.comissao ?? 0} onChange={e => setEditando(v => v ? { ...v, comissao: Number(e.target.value) } : v)} /></div>
             <div><label className="text-xs text-gray-400 mb-1 block">Forma de Pagamento</label>
               <select className={inp} value={editando.formaPagamento} onChange={e => setEditando(v => v ? { ...v, formaPagamento: e.target.value } : v)}>
                 {PAGAMENTOS.map(p => <option key={p}>{p}</option>)}</select></div>
             {(() => {
               const lb = Number(editando.precoVenda) - Number(editando.precoCusto)
-              const ll = lb - Number(editando.taxa)
+              const deducoes = Number(editando.taxa) + Number(editando.comissao || 0)
+              const ll = lb - deducoes
               return (
                 <>
                   <div className="bg-[#0d0f1a] rounded-lg p-3 text-sm space-y-1">
                     <div className="flex justify-between"><span className="text-gray-400">L.Bruto</span>
                       <span className={lb >= 0 ? 'text-green-400' : 'text-red-400'}>R$ {lb.toFixed(2)}</span></div>
+                    <div className="flex justify-between"><span className="text-gray-400">Comissão</span>
+                      <span className="text-amber-400">- R$ {Number(editando.comissao || 0).toFixed(2)}</span></div>
                     <div className="flex justify-between"><span className="text-gray-400">L.Líquido</span>
                       <span className={`font-bold ${ll >= 0 ? 'text-green-400' : 'text-red-400'}`}>R$ {ll.toFixed(2)}</span></div>
                   </div>
-                  {Number(editando.taxa) > lb && (
+                  {ll < 0 && lb >= 0 && (
                     <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-3 text-xs text-red-400">
-                      ⚠️ A taxa (R$ {Number(editando.taxa).toFixed(2)}) é maior que o lucro bruto (R$ {lb.toFixed(2)}).
-                      Esta venda ficará com prejuízo de R$ {Math.abs(ll).toFixed(2)}. Confira o valor da taxa.
+                      ⚠️ A taxa e a comissão (R$ {deducoes.toFixed(2)} somadas) são maiores que o lucro bruto (R$ {lb.toFixed(2)}).
+                      Esta venda ficará com prejuízo de R$ {Math.abs(ll).toFixed(2)}. Confira os valores.
                     </div>
                   )}
                 </>

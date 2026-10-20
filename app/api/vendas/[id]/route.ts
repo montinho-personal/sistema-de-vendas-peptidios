@@ -25,6 +25,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
       proximaCompra: new Date(body.proximaCompra + 'T12:00:00Z'),
       formaPagamento: body.formaPagamento,
       taxa: Number(body.taxa),
+      comissao: Number(body.comissao) || 0,
       lucroLiquido: Number(body.lucroLiquido),
     },
   })

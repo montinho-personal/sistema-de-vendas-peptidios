@@ -24,7 +24,7 @@ export async function GET(req: NextRequest) {
     else if (periodo === 'semestre') { from = new Date(now.getFullYear(), Math.floor(now.getMonth() / 6) * 6, 1) }
     else if (periodo === 'ano') { from = new Date(now.getFullYear(), 0, 1) }
 
-    const allowedFields = ['data', 'cliente', 'produto', 'quantidade', 'precoVenda', 'precoCusto', 'lucroBruto', 'taxa', 'lucroLiquido', 'formaPagamento', 'proximaCompra']
+    const allowedFields = ['data', 'cliente', 'produto', 'quantidade', 'precoVenda', 'precoCusto', 'lucroBruto', 'taxa', 'comissao', 'lucroLiquido', 'formaPagamento', 'proximaCompra']
     const sortField = allowedFields.includes(orderBy) ? orderBy : 'data'
 
     const where: Record<string, unknown> = {}
@@ -68,6 +68,7 @@ export async function POST(req: NextRequest) {
       proximaCompra: new Date(body.proximaCompra + 'T12:00:00Z'),
       formaPagamento: body.formaPagamento,
       taxa: Number(body.taxa),
+      comissao: Number(body.comissao) || 0,
       lucroLiquido: Number(body.lucroLiquido),
     },
   })

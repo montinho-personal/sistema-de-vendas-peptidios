@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { Topbar } from '@/components/Topbar'
 
 interface MargemData {
-  kpis: { margemBruta: number; margemLiquida: number; lucroBruto: number; lucroLiquido: number; totalTaxas: number; faturamento: number }
+  kpis: { margemBruta: number; margemLiquida: number; lucroBruto: number; lucroLiquido: number; totalTaxas: number; totalComissoes: number; faturamento: number }
   porProduto: { nome: string; vendas: number; receitaTotal: number; custoTotal: number; lucroTotal: number; margem: number }[]
   porMes: { mes: string; faturamento: number; lucroBruto: number; lucroLiquido: number; margem: number }[]
 }
@@ -48,6 +48,7 @@ export default function MargensPage() {
           { label: 'Margem Bruta', value: fmtPct(data.kpis.margemBruta), color: data.kpis.margemBruta > 30 ? 'text-green-400' : data.kpis.margemBruta > 15 ? 'text-amber-400' : 'text-red-400' },
           { label: 'Margem Líquida', value: fmtPct(data.kpis.margemLiquida), color: data.kpis.margemLiquida > 25 ? 'text-green-400' : data.kpis.margemLiquida > 10 ? 'text-amber-400' : 'text-red-400' },
           { label: 'Total em Taxas', value: fmt(data.kpis.totalTaxas), color: 'text-red-400' },
+          { label: 'Total em Comissões', value: fmt(data.kpis.totalComissoes), color: 'text-red-400' },
         ].map(k => (
           <div key={k.label} className="bg-[#131626] border border-white/5 rounded-xl p-4">
             <p className="text-xs text-gray-400 mb-1">{k.label}</p>

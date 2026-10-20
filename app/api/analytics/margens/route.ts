@@ -15,6 +15,7 @@ export async function GET() {
   const totalLucroBruto = vendas.reduce((s: number, v: Venda) => s + Number(v.lucroBruto), 0)
   const totalLucroLiq = vendas.reduce((s: number, v: Venda) => s + Number(v.lucroLiquido), 0)
   const totalTaxas = vendas.reduce((s: number, v: Venda) => s + Number(v.taxa), 0)
+  const totalComissoes = vendas.reduce((s: number, v: Venda) => s + Number(v.comissao), 0)
 
   // Por produto
   const prodMap: Record<string, { vendas: number; receita: number; custo: number; lucro: number }> = {}
@@ -51,6 +52,7 @@ export async function GET() {
       margemBruta: totalFat > 0 ? (totalLucroBruto / totalFat) * 100 : 0,
       margemLiquida: totalFat > 0 ? (totalLucroLiq / totalFat) * 100 : 0,
       totalTaxas,
+      totalComissoes,
     },
     porProduto,
     porMes,
