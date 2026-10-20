@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { cicloMedioDias } from '@/lib/ciclo'
 
 export async function GET() {
   const session = await getServerSession(authOptions)
@@ -28,14 +29,7 @@ export async function GET() {
     const sorted = compras.sort((a, b) => b.data.getTime() - a.data.getTime())
     const ultima = sorted[0]
 
-    let cicloMedio = ultima.diasDuracao || 90
-    if (sorted.length >= 2) {
-      const diffs = []
-      for (let i = 0; i < sorted.length - 1; i++) {
-        diffs.push(Math.round((sorted[i].data.getTime() - sorted[i+1].data.getTime()) / 86400000))
-      }
-      cicloMedio = Math.round(diffs.reduce((a, b) => a + b, 0) / diffs.length)
-    }
+    const cicloMedio = cicloMedioDias(sorted.map(c => c.data), ultima.diasDuracao)
 
     const diasRestantes = Math.floor((ultima.proximaCompra.getTime() - today.getTime()) / 86400000)
     const diasSemComprar = Math.floor((today.getTime() - ultima.data.getTime()) / 86400000)
