@@ -8,7 +8,18 @@ export async function GET() {
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const vendas = await prisma.venda.findMany({ orderBy: { data: 'desc' } })
+  const dispensados = await prisma.alertaDispensado.findMany()
   const today = new Date()
+
+  // Chave do alerta: cliente + produto + o ciclo a que ele se refere.
+  type Dispensado = typeof dispensados[0]
+  const chaveDispensa = (cliente: string, produto: string, ultimaCompra: string) =>
+    `${cliente}||${produto}||${ultimaCompra}`
+  const dispensadosMap: Record<string, string> = {}
+  dispensados.forEach((d: Dispensado) => {
+    const dia = d.ultimaCompra.toISOString().split('T')[0]
+    dispensadosMap[chaveDispensa(d.cliente, d.produto, dia)] = d.motivo
+  })
 
   // Get client phones
   const clientes = await prisma.cadastroCliente.findMany()
@@ -72,6 +83,13 @@ export async function GET() {
 
   // Sort
   const alertasSorted = (alertas as { diasAtraso: number }[]).sort((a, b) => b.diasAtraso - a.diasAtraso)
+
+  type Alerta = { cliente: string; produto: string; ultimaCompra: string; diasAtraso: number }
+  const motivoDe = (a: Alerta) => dispensadosMap[chaveDispensa(a.cliente, a.produto, a.ultimaCompra)]
+  const alertasAtivos = (alertasSorted as Alerta[]).filter(a => !motivoDe(a))
+  const alertasDispensados = (alertasSorted as Alerta[])
+    .filter(a => motivoDe(a))
+    .map(a => ({ ...a, motivo: motivoDe(a) }))
   const opsSorted = (oportunidades as { diasRestantes: number }[]).sort((a, b) => a.diasRestantes - b.diasRestantes)
 
   // Tendencias
@@ -97,11 +115,12 @@ export async function GET() {
     .sort((a, b) => b.vendasUltimos30 - a.vendasUltimos30)
 
   return NextResponse.json({
-    alertas: alertasSorted.slice(0, 20),
+    alertas: alertasAtivos.slice(0, 20),
+    alertasDispensados,
     oportunidades: opsSorted.slice(0, 20),
     tendencias: tendencias.slice(0, 10),
     resumo: {
-      atrasados: alertasSorted.length,
+      atrasados: alertasAtivos.length,
       proximos7dias: opsSorted.filter(o => o.diasRestantes >= 0 && o.diasRestantes <= 7).length,
       totalOportunidades: opsSorted.length,
     }

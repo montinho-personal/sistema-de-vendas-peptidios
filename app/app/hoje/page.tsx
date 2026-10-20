@@ -10,6 +10,7 @@ interface Tendencia { produto: string; vendasUltimos30: number; vendasAntes30: n
 
 interface HojeData {
   alertas: Alerta[]
+  alertasDispensados: (Alerta & { motivo: string })[]
   oportunidades: Oportunidade[]
   tendencias: Tendencia[]
   resumo: { atrasados: number; proximos7dias: number; totalOportunidades: number }
@@ -21,10 +22,33 @@ export default function HojePage() {
   const [data, setData] = useState<HojeData | null>(null)
   const [loading, setLoading] = useState(true)
   const [tab, setTab] = useState<'alertas'|'oportunidades'|'tendencias'>('alertas')
+  const [verDispensados, setVerDispensados] = useState(false)
 
-  useEffect(() => {
-    fetch('/api/analytics/hoje').then(r => r.json()).then(d => { setData(d); setLoading(false) })
-  }, [])
+  const carregar = () => fetch('/api/analytics/hoje').then(r => r.json()).then(d => { setData(d); setLoading(false) })
+
+  useEffect(() => { carregar() }, [])
+
+  // Some o cartão na hora; o recarregamento confirma pelo servidor.
+  async function dispensar(a: Alerta, motivo: 'contato' | 'descartado') {
+    setData(d => d && ({
+      ...d,
+      alertas: d.alertas.filter(x => !(x.cliente === a.cliente && x.produto === a.produto)),
+      resumo: { ...d.resumo, atrasados: Math.max(0, d.resumo.atrasados - 1) },
+    }))
+    await fetch('/api/alertas/dispensar', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ cliente: a.cliente, produto: a.produto, ultimaCompra: a.ultimaCompra, motivo }),
+    })
+    carregar()
+  }
+
+  async function restaurar(a: Alerta) {
+    await fetch('/api/alertas/dispensar', {
+      method: 'DELETE', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ cliente: a.cliente, produto: a.produto, ultimaCompra: a.ultimaCompra }),
+    })
+    carregar()
+  }
 
   const fmt = (n: number) => `R$ ${n.toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`
 
@@ -82,14 +106,55 @@ export default function HojePage() {
                   <p className="text-xs text-gray-400">em atraso</p>
                 </div>
               </div>
-              {a.telefone && (
-                <a href={`https://wa.me/55${a.telefone.replace(/\D/g,'')}`} target="_blank" rel="noopener noreferrer"
-                  className="mt-3 inline-block text-xs bg-green-500/20 text-green-400 border border-green-500/30 px-3 py-1 rounded-lg hover:bg-green-500/30 transition-colors">
-                  💬 WhatsApp
-                </a>
-              )}
+              <div className="mt-3 flex items-center gap-2">
+                {a.telefone && (
+                  <a href={`https://wa.me/55${a.telefone.replace(/\D/g,'')}`} target="_blank" rel="noopener noreferrer"
+                    onClick={() => dispensar(a, 'contato')}
+                    className="text-xs bg-green-500/20 text-green-400 border border-green-500/30 px-3 py-1 rounded-lg hover:bg-green-500/30 transition-colors">
+                    💬 WhatsApp
+                  </a>
+                )}
+                <button onClick={() => dispensar(a, 'contato')}
+                  className="text-xs text-gray-400 hover:text-white border border-white/10 px-3 py-1 rounded-lg transition-colors">
+                  ✓ Já falei
+                </button>
+                <button onClick={() => dispensar(a, 'descartado')}
+                  className="text-xs text-gray-500 hover:text-red-400 border border-white/10 px-3 py-1 rounded-lg transition-colors">
+                  ✕ Excluir
+                </button>
+              </div>
             </div>
           ))}
+
+          {(data.alertasDispensados?.length ?? 0) > 0 && (
+            <div className="pt-2">
+              <button onClick={() => setVerDispensados(v => !v)}
+                className="text-xs text-gray-500 hover:text-gray-300 transition-colors">
+                {verDispensados ? '▾' : '▸'} {data.alertasDispensados.length} dispensado{data.alertasDispensados.length > 1 ? 's' : ''}
+              </button>
+
+              {verDispensados && (
+                <div className="space-y-2 mt-2">
+                  {data.alertasDispensados.map((a, i) => (
+                    <div key={i} className="border border-white/5 bg-[#131626] rounded-xl p-3 flex items-center justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="text-sm text-gray-400 truncate">
+                          <span className="text-gray-300">{a.cliente}</span> · {a.produto}
+                        </p>
+                        <p className="text-xs text-gray-600 mt-0.5">
+                          {a.diasAtraso}d em atraso · {a.motivo === 'descartado' ? 'excluído' : 'contato feito'}
+                        </p>
+                      </div>
+                      <button onClick={() => restaurar(a)}
+                        className="text-xs text-gray-400 hover:text-white border border-white/10 px-3 py-1 rounded-lg shrink-0 transition-colors">
+                        Restaurar
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
         </div>
       )}
 

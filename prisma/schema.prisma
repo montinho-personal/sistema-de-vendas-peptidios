@@ -60,6 +60,21 @@ model Meta {
   createdAt  DateTime @default(now())
 }
 
+/// Alertas de recompra já tratados. Os alertas são calculados a partir das
+/// vendas, então sem este registro não há como marcar um como resolvido.
+/// A chave inclui `ultimaCompra`: se o cliente comprar de novo, o alerta volta
+/// sozinho no ciclo seguinte em vez de sumir para sempre.
+model AlertaDispensado {
+  id           String   @id @default(uuid())
+  cliente      String
+  produto      String
+  ultimaCompra DateTime @db.Date
+  motivo       String   @default("contato")
+  createdAt    DateTime @default(now())
+
+  @@unique([cliente, produto, ultimaCompra])
+}
+
 model CadastroProduto {
   id            String   @id @default(uuid())
   nome          String   @unique
