@@ -25,6 +25,8 @@ export default function NovaVendaPage() {
   const router = useRouter()
   const [clientes, setClientes] = useState<string[]>([])
   const [produtos, setProdutos] = useState<{ nome: string; custoPadrao: number; vendaPadrao: number; duracaoPadrao: number }[]>([])
+  // Saldo por produto; só produtos com recebimento registrado aparecem aqui.
+  const [estoque, setEstoque] = useState<Record<string, { saldo: number; consignado: number }>>({})
   const [filtroCliente, setFiltroCliente] = useState('')
   const [filtroProduto, setFiltroProduto] = useState('')
   const [saving, setSaving] = useState(false)
@@ -48,6 +50,13 @@ export default function NovaVendaPage() {
   useEffect(() => {
     fetch('/api/clientes').then(r => r.json()).then(d => setClientes(d.map((c: { nome: string }) => c.nome)))
     fetch('/api/produtos').then(r => r.json()).then(d => setProdutos(d))
+    fetch('/api/estoque', { cache: 'no-store' }).then(r => r.json()).then(d => {
+      const mapa: Record<string, { saldo: number; consignado: number }> = {}
+      ;(d.produtos ?? []).forEach((p: { produto: string; saldo: number; consignado: number }) => {
+        mapa[p.produto.trim().toLowerCase()] = { saldo: p.saldo, consignado: p.consignado }
+      })
+      setEstoque(mapa)
+    }).catch(() => {})
   }, [])
 
   const precoVendaNum = Number(form.precoVenda) || 0
@@ -100,12 +109,18 @@ export default function NovaVendaPage() {
     })
     setSaving(false)
     if (res.ok) {
-      toast('Venda registrada com sucesso!')
+      const salva = await res.json().catch(() => ({}))
+      const faltou = salva?.estoque?.faltou ?? 0
+      if (faltou > 0 && estoqueProduto) toast(`Venda registrada, mas faltaram ${faltou} un. no estoque. Confira os recebimentos.`, 'error')
+      else toast('Venda registrada com sucesso!')
       router.push('/app/vendas')
     } else {
       toast('Erro ao salvar venda', 'error')
     }
   }
+
+  const estoqueProduto = form.produto ? estoque[form.produto.trim().toLowerCase()] : undefined
+  const qtdPedida = Number(form.quantidade) || 0
 
   const clientesFiltrados = clientes.filter(c => c.toLowerCase().includes(filtroCliente.toLowerCase())).slice(0, 8)
   const produtosFiltrados = produtos.filter(p => p.nome.toLowerCase().includes(filtroProduto.toLowerCase())).slice(0, 8)
@@ -167,6 +182,12 @@ export default function NovaVendaPage() {
                       className="w-full text-left px-3 py-2 text-sm text-gray-300 hover:bg-white/5">{p.nome}</button>
                   ))}
                 </div>
+              )}
+              {estoqueProduto && (
+                <p className={`text-xs mt-1 ${estoqueProduto.saldo < qtdPedida ? 'text-red-400' : estoqueProduto.saldo <= 2 ? 'text-amber-400' : 'text-gray-500'}`}>
+                  📦 Em estoque: {estoqueProduto.saldo} un.{estoqueProduto.consignado > 0 && ` (${estoqueProduto.consignado} consignado)`}
+                  {estoqueProduto.saldo < qtdPedida && ' — menos do que esta venda'}
+                </p>
               )}
             </div>
 

@@ -19,6 +19,7 @@ const nav = [
   { href: '/app/produtos', icon: '📦', label: 'Análise Produtos' },
   { href: '/app/curva-abc', icon: '📈', label: 'Curva ABC' },
   { href: '/app/cadastro-produtos', icon: '🏷️', label: 'Cadastro Produtos' },
+  { href: '/app/estoque', icon: '📦', label: 'Estoque' },
   { href: '/app/margens', icon: '💰', label: 'Margens' },
   { href: '/app/previsao', icon: '🔮', label: 'Previsão' },
   { href: '/app/metas', icon: '🎯', label: 'Metas' },

@@ -23,6 +23,9 @@ model Venda {
   taxa           Decimal  @db.Decimal(12, 2)
   comissao       Decimal  @default(0) @db.Decimal(12, 2)
   lucroLiquido   Decimal  @db.Decimal(12, 2)
+  /// Vendas registradas depois que o estoque passou a existir dão baixa nele.
+  /// As anteriores ficam false, senão consumiriam lotes que chegaram depois.
+  baixaEstoque   Boolean  @default(false)
   createdAt      DateTime @default(now())
 }
 
@@ -86,4 +89,45 @@ model CadastroProduto {
   status        String   @default("ativo")
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
+}
+
+/// Um recebimento de mercadoria. O saldo não é guardado: é a quantidade
+/// recebida menos as movimentações, para nunca divergir do histórico.
+model LoteEstoque {
+  id              String   @id @default(uuid())
+  produto         String
+  /// 'consignado' (paga ao fornecedor conforme vende) ou 'proprio' (já pago)
+  tipo            String   @default("consignado")
+  fornecedor      String   @default("")
+  dataRecebimento DateTime @db.Date
+  quantidade      Int
+  custoUnitario   Decimal  @db.Decimal(12, 2)
+  observacao      String   @default("")
+  createdAt       DateTime @default(now())
+}
+
+/// Saída de um lote: venda (automática), devolução ao fornecedor ou perda/ajuste.
+model MovimentoEstoque {
+  id         String   @id @default(uuid())
+  loteId     String
+  /// 'venda' | 'devolucao' | 'perda'
+  tipo       String
+  quantidade Int
+  vendaId    String?
+  data       DateTime @db.Date
+  observacao String   @default("")
+  createdAt  DateTime @default(now())
+
+  @@index([loteId])
+  @@index([vendaId])
+}
+
+/// Dinheiro repassado a um fornecedor de consignado.
+model PagamentoFornecedor {
+  id         String   @id @default(uuid())
+  fornecedor String
+  data       DateTime @db.Date
+  valor      Decimal  @db.Decimal(12, 2)
+  observacao String   @default("")
+  createdAt  DateTime @default(now())
 }

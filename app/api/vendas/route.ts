@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { darBaixaVenda } from '@/lib/estoque'
 
 export async function GET(req: NextRequest) {
   try {
@@ -53,24 +54,30 @@ export async function POST(req: NextRequest) {
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const body = await req.json()
-  const venda = await prisma.venda.create({
-    data: {
-      data: new Date(body.data + 'T12:00:00Z'),
-      mes: body.mes,
-      ano: Number(body.ano),
-      cliente: body.cliente,
-      produto: body.produto,
-      quantidade: Number(body.quantidade),
-      precoCusto: Number(body.precoCusto),
-      precoVenda: Number(body.precoVenda),
-      lucroBruto: Number(body.lucroBruto),
-      diasDuracao: Number(body.diasDuracao),
-      proximaCompra: new Date(body.proximaCompra + 'T12:00:00Z'),
-      formaPagamento: body.formaPagamento,
-      taxa: Number(body.taxa),
-      comissao: Number(body.comissao) || 0,
-      lucroLiquido: Number(body.lucroLiquido),
-    },
+  const { venda, estoque } = await prisma.$transaction(async tx => {
+    const venda = await tx.venda.create({
+      data: {
+        data: new Date(body.data + 'T12:00:00Z'),
+        mes: body.mes,
+        ano: Number(body.ano),
+        cliente: body.cliente,
+        produto: body.produto,
+        quantidade: Number(body.quantidade),
+        precoCusto: Number(body.precoCusto),
+        precoVenda: Number(body.precoVenda),
+        lucroBruto: Number(body.lucroBruto),
+        diasDuracao: Number(body.diasDuracao),
+        proximaCompra: new Date(body.proximaCompra + 'T12:00:00Z'),
+        formaPagamento: body.formaPagamento,
+        taxa: Number(body.taxa),
+        comissao: Number(body.comissao) || 0,
+        lucroLiquido: Number(body.lucroLiquido),
+        baixaEstoque: true,
+      },
+    })
+    const estoque = await darBaixaVenda(tx, venda)
+    return { venda, estoque }
   })
-  return NextResponse.json(venda, { status: 201 })
+  // `estoque.faltou` > 0 avisa que a venda saiu sem saldo registrado suficiente.
+  return NextResponse.json({ ...venda, estoque }, { status: 201 })
 }
