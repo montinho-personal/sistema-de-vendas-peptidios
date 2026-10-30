@@ -17,6 +17,7 @@ const nav = [
   { href: '/app/cadastro-clientes', icon: '👤', label: 'Cadastro Clientes' },
   { href: '/app/indicacoes', icon: '🔗', label: 'Indicações' },
   { href: '/app/produtos', icon: '📦', label: 'Análise Produtos' },
+  { href: '/app/curva-abc', icon: '📈', label: 'Curva ABC' },
   { href: '/app/cadastro-produtos', icon: '🏷️', label: 'Cadastro Produtos' },
   { href: '/app/margens', icon: '💰', label: 'Margens' },
   { href: '/app/previsao', icon: '🔮', label: 'Previsão' },
